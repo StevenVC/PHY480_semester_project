@@ -20,13 +20,19 @@ m_2_prior
 1.5
 
 m_2_guess
-1.0
+0.1
+
+m_2_sig
+0.05
 
 k_2_prior
 40.0
 
 k_2_guess
 20.0
+
+k_2_sig
+5.0
 
 fr_2
 0.8

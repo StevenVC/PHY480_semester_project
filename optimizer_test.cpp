@@ -54,8 +54,10 @@ int main(int argc, char **argv) {
     // load in object 2 parameters "dampener"
     double m_2_prior = init_cond_map["m_2_prior"];
     double m_2_guess_old = init_cond_map["m_2_guess"];
+    double m_2_sig = init_cond_map["m_2_sig"];
     double k_2_prior = init_cond_map["k_2_prior"];
     double k_2_guess_old = init_cond_map["k_2_guess"];
+    double k_2_sig = init_cond_map["k_2_sig"];
     double fr_2 = init_cond_map["fr_2"];
     double L_2 = init_cond_map["L_2"];
     double x_2 = init_cond_map["x_2"];
@@ -79,7 +81,7 @@ int main(int argc, char **argv) {
     }
     double d_k_2 = d_m_2; // assuming step size is equal for d_m & d_k
 
-    double n_points = 1E5;
+    double n_points = 1E4;
     if (argc > 4) {
         n_points = atoi(argv[4]);
     }
@@ -98,10 +100,16 @@ int main(int argc, char **argv) {
         m_2_guess_old = stod(argv[7]);
     }
     if (argc > 8) {
-        k_2_prior = stod(argv[8]);
+        m_2_sig = stod(argv[8]);
+    }
+    if (argc > 8) {
+        k_2_prior = stod(argv[9]);
     }
     if (argc > 9) {
-        k_2_guess_old = stod(argv[9]);
+        k_2_guess_old = stod(argv[10]);
+    }
+    if (argc > 8) {
+        k_2_sig = stod(argv[8]);
     }
 
     vector<double> obj_1 {m_1, k_1, L_1, fr_1};
@@ -133,10 +141,14 @@ int main(int argc, char **argv) {
     // initialize variables for use in mcmc loop
     vector<double> m_2_g_hist;
     vector<double> k_2_g_hist;
-    vector<double> errors;
+    vector<double> build_pos_err_hist;
 
     double m_2_guess_new;
     double k_2_guess_new;
+
+    double p_prior_old;
+    double p_prior_new;
+    double p_accept;
 
     vector<double> build_pos_sim_new;
     double build_pos_err_new;
@@ -144,6 +156,14 @@ int main(int argc, char **argv) {
     default_random_engine rand_gen;
     normal_distribution<double> m_2_norm_dist(0.0,d_m_2);
     normal_distribution<double> k_2_norm_dist(0.0,d_k_2);
+    uniform_real_distribution<double> r_accept(0, 1);
+
+    // calculate inital probability based on the prior with the
+    // inital parameter values
+    p_prior_old = exp(-build_pos_err_old+build_pos_err_old) * \
+                    prior(m_2_prior, k_2_prior, 
+                        m_2_guess_old, k_2_guess_old, 
+                        m_2_sig, k_2_sig);
 
     // begin mcmc loop
     int iter_count = 0;
@@ -180,8 +200,32 @@ int main(int argc, char **argv) {
         // the mass and spring coeficient parameters, this uses
         // bayesian stats to include the assumption that the
         // paramter space for each parameter is gaussian
-        double p_m_2 = 1;
+        p_prior_new = exp(-build_pos_err_new+build_pos_err_new) * \
+                      prior(m_2_prior, k_2_prior, 
+                          m_2_guess_new, k_2_guess_new, 
+                          m_2_sig, k_2_sig);
 
+            // calculate current p_accept
+        p_accept = p_prior_new/p_prior_old;
 
+            // update p_prior_old
+        p_prior_old = p_prior_new;
+
+        if (r_accept(rand_gen) < p_accept) {
+            m_2_guess_old = m_2_guess_new;
+            k_2_guess_old = k_2_guess_new;
+            build_pos_err_old = build_pos_err_new;
+
+            if (iter_count > n_burn) {
+                m_2_g_hist.push_back(m_2_guess_old);
+                k_2_g_hist.push_back(k_2_guess_old);
+                build_pos_err_hist.push_back(build_pos_err_old);
+            }
+        } 
+
+        iter_count += 1;
+        cout << iter_count << "\n";
     }
+
+    cout << m_2_guess_old << ", " << k_2_guess_old << "\n";
 }

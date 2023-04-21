@@ -212,9 +212,9 @@ vector<vector<double>> est_sim_vals(
     return obj_pos;
 }
 
-vector<double> prior(double m_2, double k_2, 
-           double m_2_g, double k_2_g, 
-           double m_2_sig, double k_2_sig) {
+double prior(double m_2, double k_2, 
+             double m_2_g, double k_2_g, 
+             double m_2_sig, double k_2_sig) {
     /*
     Given values of m_2 & k_2, return a probability based on prior knoweldge
     that the user supplies in (m_2_g, k_2_g, m_2_sig, k_2_sig). The parameter
@@ -225,6 +225,7 @@ vector<double> prior(double m_2, double k_2,
         
     double p_k_2 = pow(pow(2.0*M_PI*k_2_sig, 2),-0.5) * exp(-pow(k_2-k_2_g,2)/(2.0*pow(k_2_sig,2)));
     
-    vector<double> p_m_k {p_m_2, p_k_2};
-    return p_m_k;
+    double p_prior = p_m_2 * p_k_2;
+
+    return p_prior;
 }
