@@ -60,24 +60,24 @@ vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars,
 
     */
 
-    int n_state_vars = state_vars.size();
+    int n_v = state_vars.size();
 
-    vector<double> f (n_state_vars, 0);
+    vector<double> f (n_v, 0);
 
     f[0] = state_vars[1];
     f[1] = -(state_vars[0]*(pars[1][0] + pars[1][1])/pars[0][0] - state_vars[2]*pars[1][1]/pars[0][0]) - \
-           -(state_vars[1]*(pars[2][0] + pars[2][1])/pars[0][0] - state_vars[3]*pars[2][1]/pars[0][0]) - \
-           x_g_t;
+            (state_vars[1]*(pars[2][0] + pars[2][1])/pars[0][0] - state_vars[3]*pars[2][1]/pars[0][0]) - \
+            x_g_t;
 
     f[-2] = state_vars[-1];
-    f[-1] = -(-state_vars[-4]*(pars[1][-1])/pars[0][-1] + state_vars[-2]*pars[1][-1]/pars[0][-1]) - \
-            -(-state_vars[-3]*(pars[2][-1])/pars[0][-1] + state_vars[-1]*pars[2][-1]/pars[0][-1]) -  \
-            x_g_t;;
+    f[n_v-1] = -(-state_vars[n_v-4]*(pars[1][n_v-1])/pars[0][n_v-1] + state_vars[n_v-2]*pars[1][n_v-1]/pars[0][n_v-1]) - \
+                (-state_vars[n_v-3]*(pars[2][n_v-1])/pars[0][n_v-1] + state_vars[n_v-1]*pars[2][n_v-1]/pars[0][n_v-1]) -  \
+                x_g_t;
 
     double temp_1;
     double temp_2;
 
-    for (int i=2; i<(n_state_vars-2); i++) {
+    for (int i=2; i<(n_v-2); i++) {
         // check if updating velocity of position
         if (i%2 == 0) {
             f[i] = state_vars[i+1];
@@ -85,14 +85,14 @@ vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars,
         else {
             
             // adjust to get the positions from state_vars and compute with "k" parameter
-            temp_1 = -state_vars[i-2]*(pars[1][i]/pars[0][i]) + \
-                      state_vars[i]*(pars[1][i] + pars[1][i+1])/pars[0][i] - \
-                      state_vars[i+2]*(pars[1][i+1]/pars[0][1]);
+            temp_1 = -state_vars[i-3]*(pars[1][i-1]/pars[0][i-1]) + \
+                      state_vars[i-1]*(pars[1][i-1] + pars[1][i])/pars[0][i-1] - \
+                      state_vars[i+1]*(pars[1][i]/pars[0][1]);
 
             // adjust to get the velocities from state_vars and compute with "c" parameter
-            temp_2 = -state_vars[(i+1)-2]*(pars[2][i]/pars[0][i]) + \
-                      state_vars[(i+1)]*(pars[2][i] + pars[2][i+1])/pars[0][i] - \
-                      state_vars[(i+1)+2]*(pars[2][i+1]/pars[0][1]);
+            temp_2 = -state_vars[i-2]*(pars[2][i-1]/pars[0][i-1]) + \
+                      state_vars[i]*(pars[2][i-1] + pars[2][i])/pars[0][i-1] - \
+                      state_vars[i+2]*(pars[2][i]/pars[0][1]);
 
             f[i] = -(temp_1) - (temp_2) - x_g_t;
         }
@@ -204,6 +204,77 @@ vector<vector<double>> rk4(vector<double> state_vars, vector<double> spring_pars
 
         temp = vec_mult_scal(temp, h/6);
 
+        p_hist[i+1] = vec_add(p_hist[i], temp);
+    }
+
+    return p_hist;
+}
+
+vector<vector<double>> rk4_build(vector<double> state_vars, vector<vector<double>> pars, vector<double> t, double h) {
+    /*
+    rk4 algorithm
+
+    inputs:
+        state_vars : vector of the state variables; vector<double> [x1,y1,xv_2,yv_2]
+
+        spring_pars : vector of the spring parameters; vector<double> [m1,m2,k1,k2,L1,L2,b1,b2]
+
+        t : vector contaning timing data; vector<double> [...]
+        
+    returns:
+        p_hist: 
+    */
+    
+    // initialize the time array [a,b] with stepsize h
+
+    int n_times = t.size();
+    int n_vars = state_vars.size();
+
+    vector<vector<double>> p_hist(n_times, vector<double>(n_vars, 0));
+
+    vector<double> k_1;
+    vector<double> k_2;
+    vector<double> k_3;
+    vector<double> k_4;
+
+    vector<double> temp;
+    vector<double> temp_o;
+
+    p_hist[0] = state_vars;
+
+    for (int i=0; i<n_times-1; i++) {
+        // calc k_1
+        k_1 = build_f(p_hist[i], pars, t[i]);
+
+        // calc k_2
+        temp = vec_mult_scal(k_1, h/2);
+        temp = vec_add(p_hist[i], temp);
+
+        k_2 = build_f(temp, pars, t[i]);
+
+        // calc k_3
+        temp = vec_mult_scal(k_2, h/2);
+        temp = vec_add(p_hist[i], temp);
+
+        k_3 = build_f(temp, pars, t[i]);
+
+        // calc k_4
+        temp = vec_mult_scal(k_3, h);
+        temp = vec_add(p_hist[i], temp);
+
+        k_4 = build_f(temp, pars, t[i]);
+
+        // calc x+1
+        temp_o = vec_mult_scal(k_2, 2);
+        temp = vec_add(k_1, temp_o);
+
+        temp_o = vec_mult_scal(k_3, 2);
+        temp = vec_add(temp, temp_o);
+
+        temp = vec_add(k_4, temp);
+
+        temp = vec_mult_scal(temp, h/6);
+        
         p_hist[i+1] = vec_add(p_hist[i], temp);
     }
 
