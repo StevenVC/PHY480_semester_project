@@ -17,7 +17,7 @@ vector<double> spring_f(vector<double>& state_vars, double t, vector<double>& sp
     
     return:
         f : solution of the differential equation for the 
-            coupled spring-mass system at time t; vector<double> [x1,y1,x2,y2]
+            coupled spring-mass system at time t; vector<double> [x1,y1,x2,y2] -> [vel for mass 1, accel for mass 1, vel for mass 2, accel for mass 2]
     */
     double x_1 = state_vars[0];
     double y_1 = state_vars[1];
@@ -39,6 +39,64 @@ vector<double> spring_f(vector<double>& state_vars, double t, vector<double>& sp
         y_2,
         (-fr_2*y_2 - k_2*(x_2- x_1 - L_2)) / m_2
     };
+
+    return f;
+}
+
+vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars, double x_g_t) {
+    /*
+    Defines the differential equations for the building system
+
+    inputs:
+        state_vars : vector of the state variables; vector<double> [x1, v1, x2, v2, x3, v3, ...] -> [pos of floor 1, vel of foor 1, ...]
+
+        pars : vector of the building parameters; vector<vector<double>> [[m1, m2, m3, ...], [k1, k2, k3, ...], [c1, c2, c3, ...]]
+
+        x_g_t : current ground acceleration; double
+    
+    returns:
+        f : solution of the differential equation for the 
+            building system at time t; vector<double> [v1, a1, v2, a2, v3, a3, ...]
+
+    */
+
+    int n_state_vars = state_vars.size();
+
+    vector<double> f (n_state_vars, 0);
+
+    f[0] = state_vars[1];
+    f[1] = -(state_vars[0]*(pars[1][0] + pars[1][1])/pars[0][0] - state_vars[2]*pars[1][1]/pars[0][0]) - \
+           -(state_vars[1]*(pars[2][0] + pars[2][1])/pars[0][0] - state_vars[3]*pars[2][1]/pars[0][0]) - \
+           x_g_t;
+
+    f[-2] = state_vars[-1];
+    f[-1] = -(-state_vars[-4]*(pars[1][-1])/pars[0][-1] + state_vars[-2]*pars[1][-1]/pars[0][-1]) - \
+            -(-state_vars[-3]*(pars[2][-1])/pars[0][-1] + state_vars[-1]*pars[2][-1]/pars[0][-1]) -  \
+            x_g_t;;
+
+    double temp_1;
+    double temp_2;
+
+    for (int i=2; i<(n_state_vars-2); i++) {
+        // check if updating velocity of position
+        if (i%2 == 0) {
+            f[i] = state_vars[i+1];
+        }
+        else {
+            
+            // adjust to get the positions from state_vars and compute with "k" parameter
+            temp_1 = -state_vars[i-2]*(pars[1][i]/pars[0][i]) + \
+                      state_vars[i]*(pars[1][i] + pars[1][i+1])/pars[0][i] - \
+                      state_vars[i+2]*(pars[1][i+1]/pars[0][1]);
+
+            // adjust to get the velocities from state_vars and compute with "c" parameter
+            temp_2 = -state_vars[(i+1)-2]*(pars[2][i]/pars[0][i]) + \
+                      state_vars[(i+1)]*(pars[2][i] + pars[2][i+1])/pars[0][i] - \
+                      state_vars[(i+1)+2]*(pars[2][i+1]/pars[0][1]);
+
+            f[i] = -(temp_1) - (temp_2) - x_g_t;
+        }
+    }
 
     return f;
 }
@@ -221,9 +279,13 @@ double prior(double m_2, double k_2,
     PDF's are assumed to be gaussian
     */
 
-    double p_m_2 = pow(pow(2.0*M_PI*m_2_sig, 2),-0.5) * exp(-pow(m_2-m_2_g,2)/(2.0*pow(m_2_sig,2)));
+    // double p_m_2 = pow(pow(2.0*M_PI*m_2_sig, 2),-0.5) * exp(-pow(m_2-m_2_g,2)/(2.0*pow(m_2_sig,2)));
         
-    double p_k_2 = pow(pow(2.0*M_PI*k_2_sig, 2),-0.5) * exp(-pow(k_2-k_2_g,2)/(2.0*pow(k_2_sig,2)));
+    // double p_k_2 = pow(pow(2.0*M_PI*k_2_sig, 2),-0.5) * exp(-pow(k_2-k_2_g,2)/(2.0*pow(k_2_sig,2)));
+
+    double p_m_2 = exp((2.0 * pow(m_2, 2) + pow(m_2_g, 2) - (2.0 * m_2 * m_2_g)) / (2 * pow(m_2_sig, 2)));
+
+    double p_k_2 = exp((2.0 * pow(k_2, 2) + pow(k_2_g, 2) - (2.0 * k_2 * k_2_g)) / (2 * pow(k_2_sig, 2)));
     
     double p_prior = p_m_2 * p_k_2;
 
