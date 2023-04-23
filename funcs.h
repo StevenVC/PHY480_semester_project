@@ -220,10 +220,16 @@ double prior(double m_2, double k_2,
     that the user supplies in (m_2_g, k_2_g, m_2_sig, k_2_sig). The parameter
     PDF's are assumed to be gaussian
     */
-
+    
+    double p_m_2 = exp((2 * pow(m_2, 2) + pow(m_2_g, 2) - (2 * m_2 * m_2_g)) / (2 * pow(m_2_sig, 2)))
+        
+    double p_k_2 = exp((2 * pow(k_2, 2) + pow(k_2_g, 2) - (2 * k_2 * k_2_g)) / (2 * pow(k_2_sig, 2)))
+    
+    /*
     double p_m_2 = pow(pow(2.0*M_PI*m_2_sig, 2),-0.5) * exp(-pow(m_2-m_2_g,2)/(2.0*pow(m_2_sig,2)));
         
     double p_k_2 = pow(pow(2.0*M_PI*k_2_sig, 2),-0.5) * exp(-pow(k_2-k_2_g,2)/(2.0*pow(k_2_sig,2)));
+    */
     
     double p_prior = p_m_2 * p_k_2;
 
