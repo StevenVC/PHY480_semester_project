@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
 
-    string output_file = "resutls/results.txt";
+    string output_file = "../resutls/results.txt";
     if (argc > 1) {
         output_file = argv[1];
     }

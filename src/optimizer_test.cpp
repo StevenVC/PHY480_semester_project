@@ -14,9 +14,14 @@ using namespace std;
 
 int main(int argc, char **argv) {
 
-    string init_cond_fname = "init_conds/optim_test.txt";
+    string init_cond_fname = "../init_conds/optim_test.txt";
     if (argc > 1) {
         init_cond_fname = argv[1];
+    }
+
+    string output_file = "../resutls/mcmc_output.txt";
+    if (argc > 2) {
+        output_file = argv[2];
     }
 
     map<string, double> init_cond_map;
@@ -71,46 +76,46 @@ int main(int argc, char **argv) {
     // load mcmc parameters
         // estimate of the errors in the desired building position
     double est_data_error = 0.2;
-    if (argc > 2) {
-        est_data_error = stod(argv[2]);
+    if (argc > 3) {
+        est_data_error = stod(argv[3]);
     }    
 
     double d_m_2 = 0.01;
-    if (argc > 3) {
-        d_m_2 = stod(argv[3]);
+    if (argc > 4) {
+        d_m_2 = stod(argv[4]);
     }
     double d_k_2 = d_m_2; // assuming step size is equal for d_m & d_k
 
     // double n_points = 1E4;
     double n_points = 5;
-    if (argc > 4) {
-        n_points = atoi(argv[4]);
+    if (argc > 5) {
+        n_points = atoi(argv[5]);
     }
 
     double n_burn = n_points*0.10;
-    if (argc > 5) {
-        n_burn = atoi(argv[5]);
+    if (argc > 6) {
+        n_burn = atoi(argv[6]);
     }
 
     // adjust "dampener" parameters that are being optimize
     // if desired
-    if (argc > 6) {
-        m_2_prior = stod(argv[6]);
-    }
     if (argc > 7) {
-        m_2_guess_old = stod(argv[7]);
+        m_2_prior = stod(argv[7]);
     }
     if (argc > 8) {
-        m_2_sig = stod(argv[8]);
-    }
-    if (argc > 8) {
-        k_2_prior = stod(argv[9]);
+        m_2_guess_old = stod(argv[8]);
     }
     if (argc > 9) {
-        k_2_guess_old = stod(argv[10]);
+        m_2_sig = stod(argv[9]);
     }
-    if (argc > 8) {
-        k_2_sig = stod(argv[8]);
+    if (argc > 10) {
+        k_2_prior = stod(argv[10]);
+    }
+    if (argc > 11) {
+        k_2_guess_old = stod(argv[11]);
+    }
+    if (argc > 12) {
+        k_2_sig = stod(argv[12]);
     }
 
     vector<double> obj_1 {m_1, k_1, L_1, fr_1};
@@ -246,7 +251,7 @@ int main(int argc, char **argv) {
     // cout << m_2_guess_old << ", " << k_2_guess_old << "\n";
 
     ofstream mcmc_output;
-    mcmc_output.open("mcmc_output.txt");
+    mcmc_output.open(output_file);
 
     for (int i=0; i<m_2_g_hist.size(); i++) {
         mcmc_output << m_2_g_hist[i] << ", " 
