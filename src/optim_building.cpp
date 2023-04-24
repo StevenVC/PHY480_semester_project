@@ -14,21 +14,26 @@ using namespace std;
 
 int main(int argc, char **argv) {
 
-    string init_cond_fname = "../init_conds/optim_test.txt";
+    string init_sim_cond_fname = "../init_conds/init_cond_build.txt";
     if (argc > 1) {
-        init_cond_fname = argv[1];
+        init_sim_cond_fname = argv[1];
     }
 
-    string output_file = "../resutls/mcmc_output.txt";
+    string init_optim_cond_fname = "../init_conds/init_cond_optim.txt";
     if (argc > 2) {
-        output_file = argv[2];
+        init_optim_cond_fname = argv[2];
+    }
+
+    string output_fname = "../resutls/mcmc_output.txt";
+    if (argc > 3) {
+        output_fname = argv[3];
     }
 
     map<string, double> init_cond_map;
     string init_cond_line;
     string init_cond_map_index;
 
-    ifstream init_cond_f(init_cond_fname);
+    ifstream init_cond_f(init_sim_cond_fname);
 
     int count=0;
     while (getline(init_cond_f, init_cond_line)) {
@@ -251,7 +256,7 @@ int main(int argc, char **argv) {
     // cout << m_2_guess_old << ", " << k_2_guess_old << "\n";
 
     ofstream mcmc_output;
-    mcmc_output.open(output_file);
+    mcmc_output.open(output_fname);
 
     for (int i=0; i<m_2_g_hist.size(); i++) {
         mcmc_output << m_2_g_hist[i] << ", " 

@@ -43,7 +43,7 @@ vector<double> spring_f(vector<double>& state_vars, double t, vector<double>& sp
     return f;
 }
 
-vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars, double x_g_t, int prin=0) {
+vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars, double x_g_t) {
     /*
     Defines the differential equations for the building system
 
@@ -59,8 +59,6 @@ vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars,
             building system at time t; vector<double> [v1, a1, v2, a2, v3, a3, ...]
 
     */
-
-    int prin_index = 3;
 
     int n_v = state_vars.size();
     int n_f = n_v/2;
@@ -80,21 +78,10 @@ vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars,
     double temp_1;
     double temp_2;
 
-    // if (prin==prin_index) {
-    //     cout << "f @ i=" << prin_index << ": ";
-    //     for (auto x : f) {
-    //         cout << x << ", ";
-    //     }
-    //     cout << "\n";
-    // }
-
     int p_i; // index of the position of the given floor
     int v_i; // index of the velocity of the given floor
     int pars_i; // index of the parameter associated with the given floor
     for (int i=2; i<(n_v-2); i++) {
-        // if (prin==prin_index) {
-        //     cout << "\ni:" << i << "\n";
-        // }   
 
         // check if updating velocity of position of each floor
         if (i%2 == 0) {
@@ -115,39 +102,11 @@ vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars,
                       state_vars[v_i]   * (pars[2][pars_i] + pars[2][pars_i+1]) / pars[0][pars_i] - \
                       state_vars[v_i+2] * (pars[2][pars_i+1] / pars[0][pars_i]);
 
-            // if (prin==prin_index) {
-            //     cout << "\ntemp1: " << temp_1 << "\n";
-            //     cout << "temp2: " << temp_2 << "\n";
-            //     // cout << "p_i: " << p_i << "\n";
-            //     // cout << "v_i: " << v_i << "\n";
-            //     // cout << "mass @ p_i: " << pars[2][pars_i+1] << "\n";
-            //     cout << "state_var-2: "<< state_vars[p_i-2] << "\n";
-            //     cout << "state_var  :"<< state_vars[p_i] << "\n";
-            //     cout << "state_var+2: "<< state_vars[p_i+2] << "\n";
-            //     cout << "\n";
-            // }
-
             f[i] = -(temp_1) - (temp_2) - x_g_t;
             p_i = 0;
             v_i = 0;
-
-            // if (prin==prin_index) {
-            //     cout << "f @ i=" << prin_index << ": ";
-            //     for (auto x : f) {
-            //         cout << x << ", ";
-            //     }
-            //     cout << "\n";
-            // }
         }
     }
-
-    // if (prin==prin_index) {
-    //     cout << "f: ";
-    //     for (auto x : f) {
-    //         cout << x << ", ";
-    //     }
-    //     cout << "\n";
-    // }
 
     return f;
 }
@@ -293,26 +252,9 @@ vector<vector<double>> rk4_build(vector<double> state_vars, vector<vector<double
 
     p_hist[0] = state_vars;
 
-    // cout << "pars:\n";
-    // for (auto x : pars) {
-    //     for (auto y : x) {
-    //         cout << y << ", ";
-    //     }
-    //     cout << "\n";
-    // }
-    // cout << "\n";
-
     for (int i=0; i<n_times-1; i++) {
         // calc k_1
-        k_1 = build_f(p_hist[i], pars, t[i], i);
-        
-        // if (i==0) {
-        //     cout << "k_1: ";
-        //     for (auto x : k_1) {
-        //         cout << x << ", ";
-        //     }
-        //     cout << "\n";
-        // }
+        k_1 = build_f(p_hist[i], pars, t[i]);
 
         // calc k_2
         temp = vec_mult_scal(k_1, h/2);
@@ -350,7 +292,7 @@ vector<vector<double>> rk4_build(vector<double> state_vars, vector<vector<double
 }
 
 /*
-The following for parameter optimization using mcmc
+The following functions are for parameter optimization using mcmc
 */
 double est_error(vector<double>& y_real, vector<double>& y_est, double data_error, int n_param) {
     int y_size=y_real.size();

@@ -67,6 +67,8 @@ int main(int argc, char **argv) {
         }
     }
 
+    init_cond_f.close();
+
     // format the inital conditons
     double h;
     vector<double> init_conds;
