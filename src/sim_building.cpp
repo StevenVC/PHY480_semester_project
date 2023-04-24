@@ -23,10 +23,64 @@ int main(int argc, char **argv) {
         seis_data_fname = argv[2];
     }
 
-    string output_fname = "../results/build_sim_res.txt";
+    string output_fname = "../results/sim_build_res.txt";
     if (argc > 3) {
         output_fname = argv[3];
     }
+
+    map<string, double> init_cond_map;
+    string init_cond_line;
+    string prev_string;
+    string init_cond_map_index;
+
+    ifstream init_cond_f(init_cond_fname);
+
+    int count=0;
+    while (getline(init_cond_f, init_cond_line)) {
+        if (init_cond_line=="") {
+            continue;
+        }
+
+        switch (init_cond_line[0])
+        {
+        case 'x':
+            prev_string = init_cond_line[0];
+            break;
+        
+        case 'v':
+            prev_string = init_cond_line[0];
+            break;
+
+        case 'm':
+            prev_string = init_cond_line[0];
+            break;
+
+        case 'k':
+            prev_string = init_cond_line[0];
+            break;
+
+        case 'c':
+            prev_string = init_cond_line[0];
+            break;
+
+        default:
+            prev_string = "";
+            break;
+        }
+
+
+        // if (count==0) {
+        //     init_cond_map_index = init_cond_line;
+        //     init_cond_map[init_cond_map_index] = 0.0;
+        //     count += 1;
+        // }
+        // else {
+        //     init_cond_map[init_cond_map_index] = stod(init_cond_line);
+        //     count = 0;
+        // }
+        
+    }
+
 
     vector<double> init_conds {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     
