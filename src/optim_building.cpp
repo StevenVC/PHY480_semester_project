@@ -123,145 +123,145 @@ int main(int argc, char **argv) {
         k_2_sig = stod(argv[12]);
     }
 
-    vector<double> obj_1 {m_1, k_1, L_1, fr_1};
-    vector<double> obj_2 {m_2_guess_old, k_2_guess_old, L_2, fr_2};
-    vector<double> init_conds {x_1, v_1, x_2, v_2};
-    vector<double> rk4_params {start_time, end_time, rk4_h};
+    // vector<double> obj_1 {m_1, k_1, L_1, fr_1};
+    // vector<double> obj_2 {m_2_guess_old, k_2_guess_old, L_2, fr_2};
+    // vector<double> init_conds {x_1, v_1, x_2, v_2};
+    // vector<double> rk4_params {start_time, end_time, rk4_h};
 
-    // generate inital data and error on data
-        // get the positions of the building based on the initial
-        // conditions
-    vector<double> build_pos_sim_old = est_sim_vals(
-        obj_1,
-        obj_2,
-        init_conds,
-        rk4_params
-    )[0];
+    // // generate inital data and error on data
+    //     // get the positions of the building based on the initial
+    //     // conditions
+    // vector<double> build_pos_sim_old = est_sim_vals(
+    //     obj_1,
+    //     obj_2,
+    //     init_conds,
+    //     rk4_params
+    // )[0];
 
-        // we want the buildign to have the dampening be as effective as 
-        // possible ideally the building does not move
-    vector<double> build_pos_want (build_pos_sim_old.size(), 0);
+    //     // we want the buildign to have the dampening be as effective as 
+    //     // possible ideally the building does not move
+    // vector<double> build_pos_want (build_pos_sim_old.size(), 0);
 
-    double build_pos_err_old = est_error(
-        build_pos_want, 
-        build_pos_sim_old, 
-        est_data_error, 
-        2
-    );
+    // double build_pos_err_old = est_error(
+    //     build_pos_want, 
+    //     build_pos_sim_old, 
+    //     est_data_error, 
+    //     2
+    // );
 
-    // initialize variables for use in mcmc loop
-    vector<double> m_2_g_hist;
-    vector<double> k_2_g_hist;
-    vector<double> build_pos_err_hist;
+    // // initialize variables for use in mcmc loop
+    // vector<double> m_2_g_hist;
+    // vector<double> k_2_g_hist;
+    // vector<double> build_pos_err_hist;
 
-    double m_2_guess_new;
-    double k_2_guess_new;
+    // double m_2_guess_new;
+    // double k_2_guess_new;
 
-    double p_prior_old;
-    double p_prior_new;
-    double p_accept;
+    // double p_prior_old;
+    // double p_prior_new;
+    // double p_accept;
 
-    vector<double> build_pos_sim_new;
-    double build_pos_err_new;
+    // vector<double> build_pos_sim_new;
+    // double build_pos_err_new;
 
-    default_random_engine rand_gen;
-    normal_distribution<double> m_2_norm_dist(0.0,d_m_2);
-    normal_distribution<double> k_2_norm_dist(0.0,d_k_2);
-    uniform_real_distribution<double> r_accept(0, 1);
+    // default_random_engine rand_gen;
+    // normal_distribution<double> m_2_norm_dist(0.0,d_m_2);
+    // normal_distribution<double> k_2_norm_dist(0.0,d_k_2);
+    // uniform_real_distribution<double> r_accept(0, 1);
 
-    // calculate inital probability based on the prior with the
-    // inital parameter values
-    p_prior_old = exp(-build_pos_err_old+build_pos_err_old) * \
-                  prior(m_2_prior, k_2_prior, 
-                        m_2_guess_old, k_2_guess_old, 
-                        m_2_sig, k_2_sig);
+    // // calculate inital probability based on the prior with the
+    // // inital parameter values
+    // p_prior_old = exp(-build_pos_err_old+build_pos_err_old) * \
+    //               prior(m_2_prior, k_2_prior, 
+    //                     m_2_guess_old, k_2_guess_old, 
+    //                     m_2_sig, k_2_sig);
 
-    // begin mcmc loop
-    int iter_count = 0;
-    for (int i=0; i<n_points; i++) {
-        cout << "\nIteration: " << i << "\n";
-        // update optimization parameters
-        m_2_guess_new = m_2_guess_old * abs(m_2_norm_dist(rand_gen)); // find a different distribution so I don't have to take the abs value
-        k_2_guess_new = k_2_guess_old * abs(m_2_norm_dist(rand_gen)); // find a different distribution so I don't have to take the abs value
+    // // begin mcmc loop
+    // int iter_count = 0;
+    // for (int i=0; i<n_points; i++) {
+    //     cout << "\nIteration: " << i << "\n";
+    //     // update optimization parameters
+    //     m_2_guess_new = m_2_guess_old * abs(m_2_norm_dist(rand_gen)); // find a different distribution so I don't have to take the abs value
+    //     k_2_guess_new = k_2_guess_old * abs(m_2_norm_dist(rand_gen)); // find a different distribution so I don't have to take the abs value
         
-        cout << "m_2_g_old: " << m_2_guess_old << "\n";
-        cout << "k_2_g_old: " << k_2_guess_old << "\n";
-        cout << "m_2_g_new: " << m_2_guess_new << "\n";
-        cout << "k_2_g_new: " << k_2_guess_new << "\n";
+    //     cout << "m_2_g_old: " << m_2_guess_old << "\n";
+    //     cout << "k_2_g_old: " << k_2_guess_old << "\n";
+    //     cout << "m_2_g_new: " << m_2_guess_new << "\n";
+    //     cout << "k_2_g_new: " << k_2_guess_new << "\n";
 
-        // update obj_2 vector
-        obj_2[0] = m_2_guess_new;
-        obj_2[1] = k_2_guess_new;
+    //     // update obj_2 vector
+    //     obj_2[0] = m_2_guess_new;
+    //     obj_2[1] = k_2_guess_new;
 
-        // model building position values based on the new
-        // mass and spring coefficent values of the
-        // dampener
-        build_pos_sim_new = est_sim_vals(
-            obj_1,
-            obj_2,
-            init_conds,
-            rk4_params
-        )[0];
+    //     // model building position values based on the new
+    //     // mass and spring coefficent values of the
+    //     // dampener
+    //     build_pos_sim_new = est_sim_vals(
+    //         obj_1,
+    //         obj_2,
+    //         init_conds,
+    //         rk4_params
+    //     )[0];
 
-        for (auto x : build_pos_sim_new) {
-            cout << x << "\n";
-        }
+    //     for (auto x : build_pos_sim_new) {
+    //         cout << x << "\n";
+    //     }
 
-        // calculate the sum of squares value comparing the
-        // data and model given our estimate of the errors
-        // in the data
-        build_pos_err_new = est_error(
-            build_pos_want, 
-            build_pos_sim_new, 
-            est_data_error, 
-            2
-        );
+    //     // calculate the sum of squares value comparing the
+    //     // data and model given our estimate of the errors
+    //     // in the data
+    //     build_pos_err_new = est_error(
+    //         build_pos_want, 
+    //         build_pos_sim_new, 
+    //         est_data_error, 
+    //         2
+    //     );
 
-        cout << "Est Error: " << build_pos_err_new << "\n";
+    //     cout << "Est Error: " << build_pos_err_new << "\n";
 
-        // calculate the probability of acceptance for both
-        // the mass and spring coeficient parameters, this uses
-        // bayesian stats to include the assumption that the
-        // paramter space for each parameter is gaussian
-        p_prior_new = exp(-build_pos_err_new+build_pos_err_new) * \
-                      prior(m_2_prior, k_2_prior, 
-                          m_2_guess_new, k_2_guess_new, 
-                          m_2_sig, k_2_sig);
+    //     // calculate the probability of acceptance for both
+    //     // the mass and spring coeficient parameters, this uses
+    //     // bayesian stats to include the assumption that the
+    //     // paramter space for each parameter is gaussian
+    //     p_prior_new = exp(-build_pos_err_new+build_pos_err_new) * \
+    //                   prior(m_2_prior, k_2_prior, 
+    //                       m_2_guess_new, k_2_guess_new, 
+    //                       m_2_sig, k_2_sig);
         
-        cout << p_prior_new << " " << p_prior_old << "\n";
+    //     cout << p_prior_new << " " << p_prior_old << "\n";
 
-            // calculate current p_accept
-        p_accept = p_prior_new/p_prior_old;
+    //         // calculate current p_accept
+    //     p_accept = p_prior_new/p_prior_old;
 
-            // update p_prior_old
-        p_prior_old = p_prior_new;
+    //         // update p_prior_old
+    //     p_prior_old = p_prior_new;
 
-        if (r_accept(rand_gen) < p_accept) {
-            m_2_guess_old = m_2_guess_new;
-            k_2_guess_old = k_2_guess_new;
-            build_pos_err_old = build_pos_err_new;
+    //     if (r_accept(rand_gen) < p_accept) {
+    //         m_2_guess_old = m_2_guess_new;
+    //         k_2_guess_old = k_2_guess_new;
+    //         build_pos_err_old = build_pos_err_new;
 
-            if (iter_count > n_burn) {
-                m_2_g_hist.push_back(m_2_guess_old);
-                k_2_g_hist.push_back(k_2_guess_old);
-                build_pos_err_hist.push_back(build_pos_err_old);
-            }
-        } 
+    //         if (iter_count > n_burn) {
+    //             m_2_g_hist.push_back(m_2_guess_old);
+    //             k_2_g_hist.push_back(k_2_guess_old);
+    //             build_pos_err_hist.push_back(build_pos_err_old);
+    //         }
+    //     } 
 
-        iter_count += 1;
-        cout << iter_count << "\n";
-        cout << p_accept << "\n";
-    }
+    //     iter_count += 1;
+    //     cout << iter_count << "\n";
+    //     cout << p_accept << "\n";
+    // }
 
-    // cout << m_2_guess_old << ", " << k_2_guess_old << "\n";
+    // // cout << m_2_guess_old << ", " << k_2_guess_old << "\n";
 
-    ofstream mcmc_output;
-    mcmc_output.open(output_fname);
+    // ofstream mcmc_output;
+    // mcmc_output.open(output_fname);
 
-    for (int i=0; i<m_2_g_hist.size(); i++) {
-        mcmc_output << m_2_g_hist[i] << ", " 
-                    << k_2_g_hist[i] << ", " 
-                    << build_pos_err_hist[i] << "\n";
-    }
-    mcmc_output.close();
+    // for (int i=0; i<m_2_g_hist.size(); i++) {
+    //     mcmc_output << m_2_g_hist[i] << ", " 
+    //                 << k_2_g_hist[i] << ", " 
+    //                 << build_pos_err_hist[i] << "\n";
+    // }
+    // mcmc_output.close();
 }
