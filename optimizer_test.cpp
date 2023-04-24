@@ -81,7 +81,8 @@ int main(int argc, char **argv) {
     }
     double d_k_2 = d_m_2; // assuming step size is equal for d_m & d_k
 
-    double n_points = 1E4;
+    // double n_points = 1E4;
+    double n_points = 5;
     if (argc > 4) {
         n_points = atoi(argv[4]);
     }
@@ -161,17 +162,23 @@ int main(int argc, char **argv) {
     // calculate inital probability based on the prior with the
     // inital parameter values
     p_prior_old = exp(-build_pos_err_old+build_pos_err_old) * \
-                    prior(m_2_prior, k_2_prior, 
+                  prior(m_2_prior, k_2_prior, 
                         m_2_guess_old, k_2_guess_old, 
                         m_2_sig, k_2_sig);
 
     // begin mcmc loop
     int iter_count = 0;
     for (int i=0; i<n_points; i++) {
+        cout << "\nIteration: " << i << "\n";
         // update optimization parameters
-        m_2_guess_new = m_2_guess_old * m_2_norm_dist(rand_gen);
-        k_2_guess_new = k_2_guess_old * m_2_norm_dist(rand_gen);
+        m_2_guess_new = m_2_guess_old * abs(m_2_norm_dist(rand_gen)); // find a different distribution so I don't have to take the abs value
+        k_2_guess_new = k_2_guess_old * abs(m_2_norm_dist(rand_gen)); // find a different distribution so I don't have to take the abs value
         
+        cout << "m_2_g_old: " << m_2_guess_old << "\n";
+        cout << "k_2_g_old: " << k_2_guess_old << "\n";
+        cout << "m_2_g_new: " << m_2_guess_new << "\n";
+        cout << "k_2_g_new: " << k_2_guess_new << "\n";
+
         // update obj_2 vector
         obj_2[0] = m_2_guess_new;
         obj_2[1] = k_2_guess_new;
@@ -186,6 +193,10 @@ int main(int argc, char **argv) {
             rk4_params
         )[0];
 
+        for (auto x : build_pos_sim_new) {
+            cout << x << "\n";
+        }
+
         // calculate the sum of squares value comparing the
         // data and model given our estimate of the errors
         // in the data
@@ -196,6 +207,8 @@ int main(int argc, char **argv) {
             2
         );
 
+        cout << "Est Error: " << build_pos_err_new << "\n";
+
         // calculate the probability of acceptance for both
         // the mass and spring coeficient parameters, this uses
         // bayesian stats to include the assumption that the
@@ -204,6 +217,8 @@ int main(int argc, char **argv) {
                       prior(m_2_prior, k_2_prior, 
                           m_2_guess_new, k_2_guess_new, 
                           m_2_sig, k_2_sig);
+        
+        cout << p_prior_new << " " << p_prior_old << "\n";
 
             // calculate current p_accept
         p_accept = p_prior_new/p_prior_old;
@@ -225,7 +240,18 @@ int main(int argc, char **argv) {
 
         iter_count += 1;
         cout << iter_count << "\n";
+        cout << p_accept << "\n";
     }
 
-    cout << m_2_guess_old << ", " << k_2_guess_old << "\n";
+    // cout << m_2_guess_old << ", " << k_2_guess_old << "\n";
+
+    ofstream mcmc_output;
+    mcmc_output.open("mcmc_output.txt");
+
+    for (int i=0; i<m_2_g_hist.size(); i++) {
+        mcmc_output << m_2_g_hist[i] << ", " 
+                    << k_2_g_hist[i] << ", " 
+                    << build_pos_err_hist[i] << "\n";
+    }
+    mcmc_output.close();
 }
