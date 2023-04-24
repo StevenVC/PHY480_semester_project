@@ -12,8 +12,8 @@
 using namespace std;
 
 int main(int argc, char **argv) {
-
-    string init_cond_fname = "../init_conds/optim_test.txt";
+    // load in program arguments
+    string init_cond_fname = "../init_conds/init_cond_build.txt";
     if (argc > 1) {
         init_cond_fname = argv[1];
     }
@@ -28,9 +28,25 @@ int main(int argc, char **argv) {
         output_fname = argv[3];
     }
 
+    double md = 0.03;
+    if (argc > 4) {
+        md = stod(argv[4]);
+    }
+
+    double kd = 3.7;
+    if (argc > 5) {
+        md = stod(argv[5]);
+    }
+
+    double cd = 0.197;
+    if (argc > 6) {
+        md = stod(argv[6]);
+    }
+
+    // load in inital condition arguments that define 
+    // the inital system 
     map<string, double> init_cond_map;
     string init_cond_line;
-    string prev_string;
     string init_cond_map_index;
 
     ifstream init_cond_f(init_cond_fname);
@@ -41,58 +57,79 @@ int main(int argc, char **argv) {
             continue;
         }
 
-        switch (init_cond_line[0])
-        {
-        case 'x':
-            prev_string = init_cond_line[0];
+        if (count==0) {
+            init_cond_map_index = init_cond_line;
+            count += 1;
+        }
+        else {
+            init_cond_map[init_cond_map_index] = stod(init_cond_line);
+            count = 0;
+        }
+    }
+
+    // format the inital conditons
+    double h;
+    vector<double> init_conds;
+    vector<vector<double>> pars(3);
+
+    for ( const auto &p : init_cond_map ) {
+        switch (p.first[0]) {
+        case 'h':
+            h=p.second;
             break;
-        
+
+        case 'x':
+            init_conds.push_back(p.second);
+            break;
+
         case 'v':
-            prev_string = init_cond_line[0];
+            init_conds.push_back(p.second);
             break;
 
         case 'm':
-            prev_string = init_cond_line[0];
+            pars[0].push_back(p.second);
             break;
-
+        
         case 'k':
-            prev_string = init_cond_line[0];
+            pars[1].push_back(p.second);
             break;
-
+        
         case 'c':
-            prev_string = init_cond_line[0];
+            pars[2].push_back(p.second);
             break;
 
         default:
-            prev_string = "";
             break;
         }
-
-
-        // if (count==0) {
-        //     init_cond_map_index = init_cond_line;
-        //     init_cond_map[init_cond_map_index] = 0.0;
-        //     count += 1;
-        // }
-        // else {
-        //     init_cond_map[init_cond_map_index] = stod(init_cond_line);
-        //     count = 0;
-        // }
-        
     }
 
+    // get the number of floors plus 1 for the dampener
+    int pars_width = pars[0].size(); 
 
-    vector<double> init_conds {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-    
-    double mass = 0.326; // Mkg
-    vector<vector<double>> pars {
-        {mass, mass, (mass*2)*0.03}, // [metric tonnes]
-        {650, 650, 3.7}, // [MN/m]
-        {6.2, 6.2, 0.197} // [MN-s/m]
-    };
+    // get dampener parameters if supplied from the cmd
+    // line
+    if (argc > 4) {
+        pars[0][pars_width-1] = stod(argv[4]); // set the dampener mass fraction
+    }
 
-    double h = 0.012;
+    if (argc > 5) {
+        pars[1][pars_width-1] = stod(argv[5]); // set the dampener k value
+    }
 
+    if (argc > 6) {
+        pars[2][pars_width-1] = stod(argv[6]); // set the dampener c value
+    }
+
+    // set the mass of the dampener so it is the correct
+    // fraction of the building mass
+    double m_total = 0;
+    for (int i=0; i<pars_width-1; i++) {
+        m_total += pars[0][i];
+    }
+
+    pars[0][pars_width-1] = pars[0][pars_width-1]*m_total;
+
+    // load in the data representing x_g
     vector<double> x_g_data;
 
     ifstream x_g_file(seis_data_fname);
@@ -104,12 +141,25 @@ int main(int argc, char **argv) {
 
     x_g_file.close();
 
+    // run the simulation using rk4
     vector<vector<double>> state_hist = rk4_build(init_conds, pars, x_g_data, h);
 
+    // write the results out to a txt file
     ofstream outfile;
     outfile.open(output_fname);
 
-    outfile << "x1, v1, x2, v2, x3, v3" << "\n";
+        // assign the column labels
+    count = 0;
+    for (int i=0; i<pars_width*2; i++) {
+        if (i%2 == 0) {
+            outfile << "x" << count << ", ";
+        }
+        else {
+            outfile << "v" << count  << ", ";
+            count += 1;
+        }
+    }
+    outfile << "xd, vd," << "\n";
 
     for (auto x : state_hist) {
         for (auto y : x) {
