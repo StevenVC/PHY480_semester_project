@@ -1,8 +1,40 @@
+#include <iostream>
 #include <vector>
 #include <cmath>
 #include <string>
+#include <map>
+#include <fstream>
 
 using namespace std;
+
+map<string, double> load_init_txt(string fname_txt) {
+    /**/
+    map<string, double> map_return;
+    string line = "";
+    string index;
+
+    ifstream if_file(fname_txt);
+
+    int count=0;
+    while (getline(if_file, line)) {
+        if (line=="") {
+            continue;
+        }
+        else if (count==0) {
+            index = line;
+            map_return[index] = 0.0;
+            count += 1;
+        }
+        else {
+            map_return[index] = stod(line);
+            count = 0;
+        }
+    }
+
+    if_file.close();
+
+    return map_return;
+}
 
 vector<double> spring_f(vector<double>& state_vars, double t, vector<double>& spring_pars) {
     /*
@@ -220,7 +252,7 @@ vector<vector<double>> rk4(vector<double> state_vars, vector<double> spring_pars
     return p_hist;
 }
 
-vector<vector<double>> rk4_build(vector<double> state_vars, vector<vector<double>> pars, vector<double> t, double h) {
+vector<vector<double>> rk4_build(vector<double>& state_vars, vector<vector<double>>& pars, vector<double>& t, double h) {
     /*
     rk4 algorithm
 
@@ -289,6 +321,111 @@ vector<vector<double>> rk4_build(vector<double> state_vars, vector<vector<double
     }
 
     return p_hist;
+}
+
+
+vector<vector<double>> sim_building(
+    string& seis_data_fname,
+    string& init_cond_fname, 
+    double md, 
+    double kd, 
+    double cd) {
+    /**/
+    
+    // load in inital condition arguments that define 
+    // the inital system 
+    map<string, double> init_cond_map = load_init_txt(init_cond_fname);
+
+    // load in the data representing x_g
+    vector<double> x_g_data;
+
+    ifstream x_g_file;
+    x_g_file.open(seis_data_fname);
+
+    string line;
+    while (getline(x_g_file, line)) {
+        x_g_data.push_back(atof(line.substr(line.find(" ")+1).c_str()));
+    }
+
+    x_g_file.close();
+
+    // format the inital conditons
+    double h;
+    vector<double> init_conds;
+    vector<vector<double>> pars(3);
+
+    for ( const auto &p : init_cond_map ) {
+        switch (p.first[0]) {
+        case 'h':
+            h=p.second;
+            break;
+
+        case 'x':
+            init_conds.push_back(p.second);
+            break;
+
+        case 'v':
+            init_conds.push_back(p.second);
+            break;
+
+        case 'm':
+            pars[0].push_back(p.second);
+            break;
+        
+        case 'k':
+            pars[1].push_back(p.second);
+            break;
+        
+        case 'c':
+            pars[2].push_back(p.second);
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    // get the number of floors plus 1 for the dampener
+    int pars_width = pars[0].size(); 
+
+    // set the dampener values from the input
+    pars[0][pars_width-1] = md; // set the dampener mass fraction
+    pars[1][pars_width-1] = kd; // set the dampener k value
+    pars[2][pars_width-1] = cd; // set the dampener c value
+
+    // set the mass of the dampener so it is the correct
+    // fraction of the building mass
+    double m_total = 0;
+    for (int i=0; i<pars_width-1; i++) {
+        m_total += pars[0][i];
+    }
+
+    pars[0][pars_width-1] = pars[0][pars_width-1]*m_total;
+
+    // run the simulation using rk4
+    vector<vector<double>> state_hist = rk4_build(init_conds, pars, x_g_data, h);
+
+    return state_hist;
+}
+
+void update_top_floor_pos(
+    string& xg_data_fname,
+    string& init_sim_cond_fname,
+    vector<double>& p_g,
+    vector<vector<double>>& sim_res,
+    vector<double>& top_floor_pos) {
+
+    sim_res = sim_building(
+        xg_data_fname,
+        init_sim_cond_fname,
+        p_g[0],
+        p_g[1],
+        p_g[2]
+    );
+
+    for (int i=0; i<sim_res.size(); i++) {
+        top_floor_pos[i] = sim_res[i][sim_res[0].size() - 4]; // save top floor position
+    }
 }
 
 /*
@@ -371,4 +508,47 @@ double prior(double m_2, double k_2,
     double p_prior = p_m_2 * p_k_2;
 
     return p_prior;
+}
+
+void update_error_est(
+    vector<double>& y_real, 
+    vector<double>& y_est, 
+    double data_error, 
+    int n_param, 
+    double& error) {
+
+    error = 0;
+
+    for (int i=0; i<y_real.size(); i++) {
+        error += pow(y_real[i] - y_est[i], 2) / (n_param*pow(data_error,2));
+    }
+
+    error = error/(y_real.size()-n_param);
+}
+
+double prior_build(
+    vector<double> p_guess,
+    vector<double> p_prior,
+    vector<double> p_sigma) {
+    /*
+    Given values guess for the paraeter values "p_guess", return a probability based on 
+    prior knoweldge that the user supplies in "p_prior, p_sigma". The parameter
+    PDF's are assumed to be gaussian
+    */
+
+    double prior_val = 1;
+    for (int i=0; i<p_guess.size(); i++) {
+        // check to make sure all parameters stay above 0
+        // which is a physical limit for each parameters
+        if (p_guess[i] < 0) {
+            prior_val *= 0;
+            break;
+        }
+
+        prior_val *= pow(2.0*M_PI*p_sigma[i], -0.5) * \
+                     exp(-pow(p_guess[i]-p_prior[i], 2) / \
+                          pow(2.0*p_sigma[i], 2));
+    }
+
+    return prior_val;
 }
