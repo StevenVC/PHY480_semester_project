@@ -1,1 +1,0 @@
-md -> percent of the total mass of the building
