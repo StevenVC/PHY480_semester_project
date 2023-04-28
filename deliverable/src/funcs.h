@@ -8,7 +8,18 @@
 using namespace std;
 
 map<string, double> load_init_txt(string fname_txt) {
-    /**/
+    /*
+    Load formated text files containing the inital parameters
+    of the different models
+
+    inputs:
+        fname_txt: file name and directory location; string
+
+    returns:
+        map_return: a map/dictionary of the values loaded
+                    from the text file; map<string, double>
+
+    */
     map<string, double> map_return;
     string line = "";
     string index;
@@ -41,15 +52,18 @@ vector<double> spring_f(vector<double>& state_vars, double t, vector<double>& sp
     Defines the differential equations for the coupled spring-mass system.
 
     inputs:
-        state_vars : vector of the state variables; vector<double> [x1,y1,xv_2,yv_2]
+        state_vars : vector of the state variables; vector<double> 
+                     [x1,y1,x2,y2,...]
 
-        t :  time
+        t : times; double
 
-        spring_pars : vector of the spring parameters; vector<double> [m1,m2,k1,k2,L1,L2,b1,b2]
+        spring_pars : vector of the spring parameters; vector<double> 
+                      [m1,m2,k1,k2,L1,L2,b1,b2,...]
     
     return:
         f : solution of the differential equation for the 
-            coupled spring-mass system at time t; vector<double> [x1,y1,x2,y2] -> [vel for mass 1, accel for mass 1, vel for mass 2, accel for mass 2]
+            coupled spring-mass system at time t; vector<double> 
+            [x1,y1,x2,y2,...] -> [vel for mass 1, accel for mass 1, vel for mass 2, accel for mass 2]
     */
     double x_1 = state_vars[0];
     double y_1 = state_vars[1];
@@ -77,12 +91,14 @@ vector<double> spring_f(vector<double>& state_vars, double t, vector<double>& sp
 
 vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars, double x_g_t) {
     /*
-    Defines the differential equations for the building system
+    Defines the differential equations for the building system/model
 
     inputs:
-        state_vars : vector of the state variables; vector<double> [x1, v1, x2, v2, x3, v3, ...] -> [pos of floor 1, vel of foor 1, ...]
+        state_vars : vector of the state variables; vector<double> 
+                     [x1, v1, x2, v2, x3, v3, ...] -> [pos of floor 1, vel of foor 1, ...]
 
-        pars : vector of the building parameters; vector<vector<double>> [[m1, m2, m3, ...], [k1, k2, k3, ...], [c1, c2, c3, ...]]
+        pars : vector of the building parameters; vector<vector<double>> 
+               [[m1, m2, m3, ...], [k1, k2, k3, ...], [c1, c2, c3, ...]]
 
         x_g_t : current ground acceleration; double
     
@@ -97,11 +113,13 @@ vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars,
 
     vector<double> f (n_v, 0);
 
+    // compute the velocity and acceleration of the first floor
     f[0] = state_vars[1];
     f[1] = -(state_vars[0]*(pars[1][0] + pars[1][1])/pars[0][0] - state_vars[2]*pars[1][1]/pars[0][0]) - \
             (state_vars[1]*(pars[2][0] + pars[2][1])/pars[0][0] - state_vars[3]*pars[2][1]/pars[0][0]) - \
             x_g_t;
 
+    // compute the velocity and acceleration of the dampener
     f[n_v-2] = state_vars[n_v-1];
     f[n_v-1] = -(-state_vars[n_v-4]*(pars[1][n_f-1])/pars[0][n_f-1] + state_vars[n_v-2]*pars[1][n_f-1]/pars[0][n_f-1]) - \
                 (-state_vars[n_v-3]*(pars[2][n_f-1])/pars[0][n_f-1] + state_vars[n_v-1]*pars[2][n_f-1]/pars[0][n_f-1]) -  \
@@ -145,7 +163,15 @@ vector<double> build_f(vector<double>& state_vars, vector<vector<double>>& pars,
 
 vector<double> vec_add(vector<double>& a, vector<double>& b) {
     /*
-    compute the sum of vector a & b
+    Compute the sum of vector a & b
+
+    inputs:
+        a: first vector; vector<double>
+
+        b: second vector; vector<double>
+
+    returns:
+        c: sum of vector a & b; vector<double>
     */
     int vec_size = a.size();
 
@@ -160,7 +186,15 @@ vector<double> vec_add(vector<double>& a, vector<double>& b) {
 
 vector<double> vec_mult_scal(vector<double>& a, double b) {
     /*
-    compute the sum of vector a and scalar b
+    Compute the product of vector a and scalar b
+
+    inputs:
+        a: first vector; vector<double>
+
+        b: second vector; vector<double>
+
+    returns:
+        c: product of vector a and scalar b; vector<double>
     */
     int vec_size = a.size();
 
@@ -175,12 +209,15 @@ vector<double> vec_mult_scal(vector<double>& a, double b) {
 
 vector<vector<double>> rk4(vector<double> state_vars, vector<double> spring_pars, double a, double b, double h) {
     /*
-    rk4 algorithm
+    RK4 algorithm, used to solve systems of ordinary differential
+    equations. This is specific to the spring model
 
     inputs:
-        state_vars : vector of the state variables; vector<double> [x1,y1,xv_2,yv_2]
+        state_vars : vector of the state variables; vector<double> 
+                     [x1,y1,x_2,y_2,...]
 
-        spring_pars : vector of the spring parameters; vector<double> [m1,m2,k1,k2,L1,L2,b1,b2]
+        spring_pars : vector of the spring parameters; vector<double> 
+                      [m1,m2,k1,k2,L1,L2,b1,b2,...]
 
         a : initial time; double
 
@@ -189,7 +226,8 @@ vector<vector<double>> rk4(vector<double> state_vars, vector<double> spring_pars
         h : step size; double
 
     returns:
-        p_hist: 
+        p_hist: state variable history; vector<vector<double>>
+                [[x1,y1,x2,y2...]...]
     */
     
     // initialize the time array [a,b] with stepsize h
@@ -213,6 +251,8 @@ vector<vector<double>> rk4(vector<double> state_vars, vector<double> spring_pars
 
     p_hist[0] = state_vars;
 
+    // compute the rk4 coefficients and calculate the integrals 
+    // of the function
     for (int i=0; i<n_times-1; i++) {
         // calc k_1
         k_1 = spring_f(p_hist[i], times[i], spring_pars);
@@ -246,25 +286,35 @@ vector<vector<double>> rk4(vector<double> state_vars, vector<double> spring_pars
 
         temp = vec_mult_scal(temp, h/6);
 
+        // compute integral of the ode system
         p_hist[i+1] = vec_add(p_hist[i], temp);
     }
 
     return p_hist;
 }
 
-vector<vector<double>> rk4_build(vector<double>& state_vars, vector<vector<double>>& pars, vector<double>& t, double h) {
+vector<vector<double>> rk4_build(vector<double>& state_vars, 
+                                 vector<vector<double>>& pars, 
+                                 vector<double>& t, 
+                                 double h) {
     /*
-    rk4 algorithm
+    RK4 algorithm, used to solve systems of ordinary differential
+    equations. This is specific to the building model
 
     inputs:
-        state_vars : vector of the state variables; vector<double> [x1,y1,xv_2,yv_2]
+        state_vars : vector of the state variables; 
+                     vector<double>& [x1,y1,xv_2,yv_2]
 
-        spring_pars : vector of the spring parameters; vector<double> [m1,m2,k1,k2,L1,L2,b1,b2]
+        spring_pars : vector of the spring parameters; 
+                      vector<double>& [m1,m2,k1,k2,L1,L2,b1,b2]
 
-        t : vector contaning timing data; vector<double> [...]
+        t : vector contaning timing data; vector<double>& [...]
+
+        h : rk4 stepsize; double
         
     returns:
-        p_hist: 
+        p_hist: state variable history; vector<vector<double>>
+                [[x1,y1,x2,y2...]...]
     */
     
     // initialize the time array [a,b] with stepsize h
@@ -274,16 +324,15 @@ vector<vector<double>> rk4_build(vector<double>& state_vars, vector<vector<doubl
 
     vector<vector<double>> p_hist(n_times, vector<double>(n_vars, 0));
 
-    vector<double> k_1;
-    vector<double> k_2;
-    vector<double> k_3;
-    vector<double> k_4;
+    vector<double> k_1, k_2, k_3, k_4;
 
     vector<double> temp;
     vector<double> temp_o;
 
     p_hist[0] = state_vars;
 
+    // compute the rk4 coefficients and calculate the integrals 
+    // of the function
     for (int i=0; i<n_times-1; i++) {
         // calc k_1
         k_1 = build_f(p_hist[i], pars, t[i]);
@@ -317,6 +366,7 @@ vector<vector<double>> rk4_build(vector<double>& state_vars, vector<vector<doubl
 
         temp = vec_mult_scal(temp, h/6);
         
+        // compute integral of the ode system
         p_hist[i+1] = vec_add(p_hist[i], temp);
     }
 
@@ -330,7 +380,29 @@ vector<vector<double>> sim_building(
     double md, 
     double kd, 
     double cd) {
-    /**/
+    /*
+    Run the simulation of the building model with a given
+    set of parameters
+
+    input:
+        seis_data_fname : name and location of the file containing 
+                          the seismic data used to perturb the building;
+                          string&
+
+        init_cond_fname : name and location of the file containing
+                          the initial conditions of the simulation;
+                          string&
+
+        md : dampener mass; double
+
+        kd : dampener spring constant; double
+
+        cd : dampener stiffness; double
+
+    returns:
+        state_hist : history of the state variables over the simulation;
+                     vector<vector<double>>      
+    */
     
     // load in inital condition arguments that define 
     // the inital system 
@@ -414,7 +486,29 @@ void update_top_floor_pos(
     vector<double>& p_g,
     vector<vector<double>>& sim_res,
     vector<double>& top_floor_pos) {
+    /*
+    Used in MCMC algorithm to get the top floor positions across
+    simulation history
 
+    inputs:
+        xg_data_fname : name and location of the file containing 
+                        the ground displacement data used to perturb 
+                        the building; string&
+        
+        init_sim_cond_fname : name and location of the file containing
+                              the initial conditions of the simulation;
+                              string&
+        
+        p_g : guesses of the dampener parameter values; vector<double>&
+        
+        sim_res : history of the state variables over the simulation;
+                  vector<vector<double>>&
+        
+        top_floor_pos : positions of the top floor across the simulation
+                        history; vector<double>&
+    */
+
+    // update simulation results with current parameter guesses
     sim_res = sim_building(
         xg_data_fname,
         init_sim_cond_fname,
@@ -423,15 +517,20 @@ void update_top_floor_pos(
         p_g[2]
     );
 
+    // update top floor positions 
     for (int i=0; i<sim_res.size(); i++) {
         top_floor_pos[i] = sim_res[i][sim_res[0].size() - 4]; // save top floor position
     }
 }
 
-/*
-The following functions are for parameter optimization using mcmc
-*/
 double est_error(vector<double>& y_real, vector<double>& y_est, double data_error, int n_param) {
+    /*
+    calculate an error estimate based on a desired state and the 
+    current simulation state. Used in the MCMC algorithm
+
+    inputs:
+
+    */
     int y_size=y_real.size();
 
     double error = 0;
@@ -445,70 +544,71 @@ double est_error(vector<double>& y_real, vector<double>& y_est, double data_erro
     return error;
 }
 
-vector<vector<double>> est_sim_vals(
-                  vector<double>& obj_1, 
-                  vector<double>& obj_2,
-                  vector<double>& init_conds,
-                  vector<double>& rk4_params) {
-    /*
-    Runs the coupled spring simulation
+// vector<vector<double>> est_sim_vals(
+//                   vector<double>& obj_1, 
+//                   vector<double>& obj_2,
+//                   vector<double>& init_conds,
+//                   vector<double>& rk4_params) {
+//     /*
+//     Runs the coupled spring simulation with a given set of 
+//     spring parameters
     
-    inputs:
-        obj_1: vector of parameters describing the "building";
-               {m, k, L, fr}
+//     inputs:
+//         obj_1: vector of parameters describing the "building";
+//                {m, k, L, fr}
         
-        obj_2: vector of parameters describing the "dampener";
-               {m, k, L, fr}
+//         obj_2: vector of parameters describing the "dampener";
+//                {m, k, L, fr}
         
-        init_conds: vector describing the inital position and 
-                    velocity of obj_1 & obj_2;
-                    {x_1, v_1, x_2, v_2}
+//         init_conds: vector describing the inital position and 
+//                     velocity of obj_1 & obj_2;
+//                     {x_1, v_1, x_2, v_2}
 
-        rk4_params: vector of parameters for the rk4 solver;
-                    {start_time, stop_time, step_size}
+//         rk4_params: vector of parameters for the rk4 solver;
+//                     {start_time, stop_time, step_size}
 
-    returns:
-        obj_pos: 2d vector containing the position history for 
-                 the "building" and the "dampner";
-                 {{x_1_i},{x_2_i}}
-    */
+//     returns:
+//         obj_pos: 2d vector containing the position history for 
+//                  the "building" and the "dampner";
+//                  {{x_1_i},{x_2_i}}
+//     */
 
-    vector<double> spring_pars {obj_1[0], obj_2[0], obj_1[1], obj_2[1],
-                                obj_1[2], obj_2[2], obj_1[3], obj_2[3]};
+//     vector<double> spring_pars {obj_1[0], obj_2[0], obj_1[1], obj_2[1],
+//                                 obj_1[2], obj_2[2], obj_1[3], obj_2[3]};
 
-    vector<vector<double>> state_hist = rk4(init_conds, spring_pars, rk4_params[0], rk4_params[1], rk4_params[2]);
+//     vector<vector<double>> state_hist = rk4(init_conds, spring_pars, rk4_params[0], rk4_params[1], rk4_params[2]);
     
-    vector<vector<double>> obj_pos (2, vector<double> (state_hist.size(), 0));
+//     vector<vector<double>> obj_pos (2, vector<double> (state_hist.size(), 0));
 
-    for (int i=0; i<state_hist.size(); i++) {
-        obj_pos[0][i] = state_hist[i][0];
-        obj_pos[1][i] = state_hist[i][2];
-    }
+//     for (int i=0; i<state_hist.size(); i++) {
+//         obj_pos[0][i] = state_hist[i][0];
+//         obj_pos[1][i] = state_hist[i][2];
+//     }
 
-    return obj_pos;
-}
+//     return obj_pos;
+// }
 
-double prior(double m_2, double k_2, 
-             double m_2_g, double k_2_g, 
-             double m_2_sig, double k_2_sig) {
-    /*
-    Given values of m_2 & k_2, return a probability based on prior knoweldge
-    that the user supplies in (m_2_g, k_2_g, m_2_sig, k_2_sig). The parameter
-    PDF's are assumed to be gaussian
-    */
+// double prior(double m_2, double k_2, 
+//              double m_2_g, double k_2_g, 
+//              double m_2_sig, double k_2_sig) {
+//     /*
+//     Given values of m_2 & k_2, return a probability based on prior knoweldge
+//     that the user supplies in (m_2_g, k_2_g, m_2_sig, k_2_sig). The parameter
+//     PDF's are assumed to be gaussian
+//     */
 
-    double p_m_2 = pow(pow(2.0*M_PI*m_2_sig, 2),-0.5) * exp(-pow(m_2-m_2_g,2)/(2.0*pow(m_2_sig,2)));
+//     double p_m_2 = pow(pow(2.0*M_PI*m_2_sig, 2),-0.5) * exp(-pow(m_2-m_2_g,2)/(2.0*pow(m_2_sig,2)));
         
-    double p_k_2 = pow(pow(2.0*M_PI*k_2_sig, 2),-0.5) * exp(-pow(k_2-k_2_g,2)/(2.0*pow(k_2_sig,2)));
+//     double p_k_2 = pow(pow(2.0*M_PI*k_2_sig, 2),-0.5) * exp(-pow(k_2-k_2_g,2)/(2.0*pow(k_2_sig,2)));
 
-    // double p_m_2 = exp((2.0 * pow(m_2, 2) + pow(m_2_g, 2) - (2.0 * m_2 * m_2_g)) / (2 * pow(m_2_sig, 2)));
+//     // double p_m_2 = exp((2.0 * pow(m_2, 2) + pow(m_2_g, 2) - (2.0 * m_2 * m_2_g)) / (2 * pow(m_2_sig, 2)));
 
-    // double p_k_2 = exp((2.0 * pow(k_2, 2) + pow(k_2_g, 2) - (2.0 * k_2 * k_2_g)) / (2 * pow(k_2_sig, 2)));
+//     // double p_k_2 = exp((2.0 * pow(k_2, 2) + pow(k_2_g, 2) - (2.0 * k_2 * k_2_g)) / (2 * pow(k_2_sig, 2)));
     
-    double p_prior = p_m_2 * p_k_2;
+//     double p_prior = p_m_2 * p_k_2;
 
-    return p_prior;
-}
+//     return p_prior;
+// }
 
 void update_error_est(
     vector<double>& y_real, 
@@ -516,6 +616,22 @@ void update_error_est(
     double data_error, 
     int n_param, 
     double& error) {
+
+    /*
+    Update the estimated error of the parameter values, based on a
+    desired state and state modeled using a given set of parameters
+
+    inputs:
+        y_real : the desired final state of the model; vector<double>&
+
+        y_est : the simulated final state of the model; vector<double>&
+
+        data_error : value defining the error on "y_real"; double
+
+        n_param : the number of parameters being optimized; int
+
+        error : previous error values to be updated; double&
+    */
 
     error = 0;
 
@@ -527,13 +643,25 @@ void update_error_est(
 }
 
 double prior_build(
-    vector<double> p_guess,
-    vector<double> p_prior,
-    vector<double> p_sigma) {
+    vector<double>& p_guess,
+    vector<double>& p_prior,
+    vector<double>& p_sigma) {
     /*
     Given values guess for the paraeter values "p_guess", return a probability based on 
     prior knoweldge that the user supplies in "p_prior, p_sigma". The parameter
     PDF's are assumed to be gaussian
+
+    inputs:
+        p_guess : guesses for the parameter values being optimized; vector<double>&
+
+        p_prior : mean value of the gaussian that defines the parameters
+                  prior; vector<double>&
+
+        p_sigma : variance of the gaussian that defines the parameters
+                  prior; vector<double>&
+
+    returns:
+        prior_val : value of the total prior distribution; double
     */
 
     double prior_val = 1;
@@ -545,6 +673,7 @@ double prior_build(
             break;
         }
 
+        // calculate the prior distribution and combine 
         prior_val *= pow(2.0*M_PI*p_sigma[i], -0.5) * \
                      exp(-pow(p_guess[i]-p_prior[i], 2) / \
                           pow(2.0*p_sigma[i], 2));

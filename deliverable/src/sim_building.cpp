@@ -28,21 +28,6 @@ int main(int argc, char **argv) {
         output_fname = argv[3];
     }
 
-    // double md = 0.03;
-    // if (argc > 4) {
-    //     md = stod(argv[4]);
-    // }
-
-    // double kd = 3.7;
-    // if (argc > 5) {
-    //     md = stod(argv[5]);
-    // }
-
-    // double cd = 0.197;
-    // if (argc > 6) {
-    //     md = stod(argv[6]);
-    // }
-
     // load in inital condition arguments that define 
     // the inital system 
     map<string, double> init_cond_map;

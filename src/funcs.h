@@ -252,14 +252,19 @@ vector<vector<double>> rk4(vector<double> state_vars, vector<double> spring_pars
     return p_hist;
 }
 
-vector<vector<double>> rk4_build(vector<double>& state_vars, vector<vector<double>>& pars, vector<double>& t, double h) {
+vector<vector<double>> rk4_build(vector<double>& state_vars, 
+                                 vector<vector<double>>& pars, 
+                                 vector<double>& t, 
+                                 double h) {
     /*
     rk4 algorithm
 
     inputs:
-        state_vars : vector of the state variables; vector<double> [x1,y1,xv_2,yv_2]
+        state_vars : vector of the state variables; 
+                     vector<double> [x1,y1,xv_2,yv_2]
 
-        spring_pars : vector of the spring parameters; vector<double> [m1,m2,k1,k2,L1,L2,b1,b2]
+        spring_pars : vector of the spring parameters; 
+                      vector<double> [m1,m2,k1,k2,L1,L2,b1,b2]
 
         t : vector contaning timing data; vector<double> [...]
         
@@ -274,10 +279,7 @@ vector<vector<double>> rk4_build(vector<double>& state_vars, vector<vector<doubl
 
     vector<vector<double>> p_hist(n_times, vector<double>(n_vars, 0));
 
-    vector<double> k_1;
-    vector<double> k_2;
-    vector<double> k_3;
-    vector<double> k_4;
+    vector<double> k_1, k_2, k_3, k_4;
 
     vector<double> temp;
     vector<double> temp_o;

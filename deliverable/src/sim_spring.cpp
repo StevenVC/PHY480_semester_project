@@ -72,9 +72,11 @@ int main(int argc, char **argv) {
         stop_time = stod(argv[4]);
     }
 
+    // setup inital conditions
     vector<double> state_vars_init {x_1, v_1, x_2, v_2};
     vector<double> spring_pars {m_1, m_2, k_1, k_2, L_1, L_2, fr_1, fr_2};
 
+    // run the simulation
     vector<vector<double>> star_var_final = rk4(state_vars_init, spring_pars, start_time, stop_time, step_size);
 
     // write to file the results of the program

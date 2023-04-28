@@ -13,6 +13,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
 
+    // use defaults or take in arguments from the command line
     string init_sim_cond_fname = "../init_conds/init_cond_build.txt";
     if (argc > 1) {
         init_sim_cond_fname = argv[1];
@@ -112,24 +113,14 @@ int main(int argc, char **argv) {
 
     uniform_real_distribution<double> r_accept(0, 1);
 
-    ofstream log;
-    log.open("../results/mcmc_log.txt");
-
     // begin mcmc loop
     int iter_count = 0;
     for (int i=0; i<mcmc_points; i++) {
-        // log << "\n";
-        // log << "Iteration: " << i << "\n";
-        // log << "mass old:" << p_g_old[0] << "\n";
 
         // update optimization parameters
         p_g_new[0] = p_g_old[0] +  md_norm_dist(rand_gen);
         p_g_new[1] = p_g_old[1] +  kd_norm_dist(rand_gen);
         p_g_new[2] = p_g_old[2] +  cd_norm_dist(rand_gen);
-
-        // log << "mass new:" << p_g_new[0] << "\n";
-        // log << "P_accept: " << p_accept << "\n";
-        // log << "\n";
 
         // calculate new simulation results and error
         // based on new parameter values
@@ -179,20 +170,10 @@ int main(int argc, char **argv) {
             }
         } 
 
-        log << "\n";
-        log << "Iteration: " << i << "\n";
-        log << "sim error: " << sim_err_new << "\n";
-        log << "mass: " << p_g_old[0] << "\n";
-        log << "k: " << p_g_old[1] << "\n";
-        log << "c: " << p_g_old[2] << "\n";
-        log << "P_accept: " << p_accept << "\n";
-        log << "\n";
-
         iter_count += 1;
     }
 
-    log.close();
-
+    // write out the final results of the MCMC optimization
     ofstream mcmc_output;
     mcmc_output.open(output_fname);
 
